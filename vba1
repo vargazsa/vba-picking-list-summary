@@ -1,0 +1,272 @@
+Sub osszesito()
+
+Dim lastRow As Integer
+lastRow = ActiveSheet.Cells(Rows.Count, 1).End(xlUp).Row
+    
+    'Delete unwanted columns and add columns to contain data
+    Range("N:P").EntireColumn.Delete
+    Range("A:A").Insert
+    Range("A:A").Insert
+    
+    'Add column names
+    Cells(1, 1) = "Sorsz."
+    Cells(1, 2) = "Lerakó"
+    
+    
+    'Define unloading serial number
+    With Range("B:B")
+    
+        For i = 1 To lastRow - 1
+        
+            If Cells(i + 1, 3) = "AKS S.R.L.- BUCURESTI / ALUMINIUM" Or Cells(i + 1, 3) = "AKS S.R.L.- BUCURESTI / PVC" Then
+        
+                Cells(i + 1, 2) = "3."
+                
+                Else
+                
+        
+                If Cells(i + 1, 3) = "AKS S.R.L. - ORADEA / ALUMINIUM" Or Cells(i + 1, 3) = "AKS S.R.L. - ORADEA / PVC" Then
+        
+                    Cells(i + 1, 2) = "1. bal oldal"
+        
+                    Else
+                        
+        
+                    If Cells(i + 1, 3) = "ALLCOLORS UNGHENI SRL" Then
+        
+                        Cells(i + 1, 2) = "2."
+        
+                        Else
+                                
+                                Cells(i + 1, 2) = "Hát ez meg mi?"
+        
+                        End If
+        
+                    End If
+        
+                End If
+        
+        Next i
+        
+    End With
+
+    'Sort by unloading serial number
+    
+    ActiveSheet.Sort.SortFields.Add Key:=Range( _
+        "B:B"), SortOn:=xlSortOnValues, Order:=xlDescending, _
+        DataOption:=xlSortNormal
+    ActiveSheet.Sort.Apply
+    
+    
+    'Format table
+    
+    'Row height
+    ActiveSheet.Rows.RowHeight = 25
+    
+    'Column width
+    Columns("A:O").AutoFit
+    
+    
+    'Define very last row
+    With Range("A:A")
+        For i = 1 To lastRow - 1
+        
+            Cells(i + 1, 1) = i
+        
+        Next i
+    End With
+    
+    'Format text
+    Range("A:O").Font.Name = "Arial"
+    Range("A:O").Font.Size = 10
+    Range("A1:O1").Font.Bold = True
+    Range("A" & lastRow + 1 & ":" & "O" & lastRow + 1).Font.Bold = True
+    Range("A:B").HorizontalAlignment = xlLeft
+    Range("A:C").Columns.AutoFit
+    Columns("O:O").EntireColumn.AutoFit
+    
+    'Format cell colors
+    For i = Range("A1").Column To Range("O1").Column Step 2
+         Columns(i).Interior.Color = RGB(234, 237, 237)
+    Next i
+    
+     
+    'Add some empty rows
+    Range("A1").EntireRow.Insert
+    Range("A1").EntireRow.Insert
+    Range("A1").EntireRow.Insert
+    
+    'Add table name and date
+    Cells(1, 1) = "Összesítő"
+    Cells(2, 1) = Format(Now(), "yyyy.mmm.dd")
+    
+    'Change font for table name and date
+    Range("A1:B1").Font.Size = 14
+    Range("A1:B1").Font.Bold = True
+    
+    'Uncolor table name and date
+    Range("A1:O3").Interior.ColorIndex = xlColorIndexNone
+    
+    'Set borders for cells except summary line
+    Dim lRow As Integer
+    lRow = ActiveSheet.Cells(Rows.Count, 1).End(xlUp).Row
+    
+    With Range("A4" & ":" & "O" & lRow).Borders
+        .LineStyle = xlContinuous
+        .Color = vbBlack
+        .Weight = xlThin
+    End With
+    
+    'Uncolor summary line
+    Rows(lRow + 1).Interior.ColorIndex = xlColorIndexNone
+    Cells(lRow + 1, 3) = "Összesen"
+    
+    
+    'Clear unnecessary data
+    Worksheets("Munka01").Columns(16).ClearContents
+    Worksheets("Munka01").Columns(17).ClearContents
+
+    'Hide column if empty
+    If WorksheetFunction.CountA(Range("J5:J2000")) = 0 Then
+        Columns("J").Hidden = True
+        Else
+    End If
+    
+  
+
+    'Setup print format
+    Application.PrintCommunication = False
+    With ActiveSheet.PageSetup
+        .PrintTitleRows = "$1:$4"
+        .LeftMargin = Application.InchesToPoints(0.236220472440945)
+        .RightMargin = Application.InchesToPoints(0.236220472440945)
+        .TopMargin = Application.InchesToPoints(0.5)
+        .BottomMargin = Application.InchesToPoints(0.748031496062992)
+        .HeaderMargin = Application.InchesToPoints(0.608661417322835)
+        .FooterMargin = Application.InchesToPoints(0.31496062992126)
+        .ScaleWithDocHeaderFooter = True
+        .AlignMarginsHeaderFooter = True
+        .FitToPagesWide = 1
+        .FitToPagesTall = False
+        '.LeftHeader = Format(Now(), "yyyy.mmmm.dd")
+        .CenterHeader = "&""Calibri,Félkövér""&18&L Alukönigstahl srl., Románia"
+        .RightHeader = ""
+        .RightFooter = ""
+        .CenterHorizontally = True
+        .Orientation = xlLandscape
+    End With
+    Application.PrintCommunication = True
+    
+    'Add new worksheet to summarize shipment data
+      Sheets.Add After:=Worksheets(Sheets.Count)
+    On Error Resume Next
+    ActiveSheet.Name = "Előlap"
+    
+
+    
+    
+    'Format summary worksheet
+    
+    With Worksheets("Előlap")
+                    
+        Cells(1, 1) = "ALUKÖNIGSTAHL S.R.L."
+    
+        With Range("A1:D1")
+            .Merge
+            .Font.Name = "Arial"
+            .Font.Size = 14
+            .Font.Bold = True
+            .Font.Italic = True
+        End With
+    
+        Cells(4, 1) = "Szállítás napja"
+        Cells(5, 1) = "Rendszám(ok)"
+        Cells(8, 2) = "Csomagolóanyag-rendelés"
+        Range("B8:D8").WrapText = True
+        Cells(8, 3) = "Extra csomagolóanyag"
+        Range("C8:D8").Merge
+        Cells(8, 5) = "CMR"
+        Cells(8, 6) = "EKAER"
+        
+        With Range("A8:F8")
+            .Font.Name = "Arial"
+            .Font.Size = 14
+            .Font.Bold = True
+            .HorizontalAlignment = xlCenter
+            .VerticalAlignment = xlCenter
+        End With
+        
+        
+        Cells(10, 1) = "Bucuresti"
+        Cells(11, 1) = "Oradea"
+        Cells(12, 1) = "Vidrasau"
+        
+        
+        With Range("A10:A12")
+            .Font.Name = "Arial"
+            .Font.Size = 14
+            .Font.Bold = True
+            .HorizontalAlignment = xlCenter
+            .VerticalAlignment = xlCenter
+        End With
+    
+    
+        With Range("A4:F12")
+            .Font.Name = "Arial"
+            .Font.Size = 14
+        End With
+    
+        Cells(4, 4) = "x"
+        
+        With Cells(4, 4)
+            .Font.Name = "Arial"
+            .Font.Size = 14
+            .Font.ColorIndex = 3
+        End With
+                
+        
+        Cells(9, 3) = "LGP"
+        Cells(9, 4) = "EUR raklap"
+        
+        With Range("A8:F12").Borders
+            .LineStyle = xlContinuous
+            .Weight = xlThin
+            .ColorIndex = 5
+        End With
+        
+        Columns("A:B").ColumnWidth = 24
+        Columns("C:D").ColumnWidth = 14
+        Columns("E").ColumnWidth = 15
+        Columns("F").ColumnWidth = 30
+    
+    
+        Range("A1:F5").Rows.RowHeight = 25
+        Range("A8:F8").Rows.RowHeight = 48
+        Range("A10:F12").Rows.RowHeight = 65
+        
+        Rows(2).EntireRow.Delete
+        Range("B9:F11").HorizontalAlignment = xlCenter
+        Range("B9:F11").VerticalAlignment = xlCenter
+        
+        
+        Cells(3, 2).Value = Date
+        Cells(3, 2).HorizontalAlignement = xlLeft
+        
+        .PageSetup.Orientation = xlLandscape
+        .PageSetup.FitToPagesWide = 1
+        .PageSetup.FitToPagesTall = 1
+        
+    End With
+
+'add dropdown list of licence plates
+    
+    Worksheets("Előlap").Range("B4").Validation.Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, _
+Formula1:="BH28RUT,BH36RUT,BH38RUT,BH16RUT,BH21RUT,BH75MTS,MM23DAF,BH66MTS,BH12LOR,BH21HOK"
+
+    Worksheets("Előlap").Range("B5").Validation.Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, _
+Formula1:="BH29RUT,BH39RUT,BH32RUT,BH17RUT,BH22RUT,BH83MTS,MM29DAF,BH82MTS,BH14KYS,BH35HOC"
+
+    
+    
+    
+End Sub
